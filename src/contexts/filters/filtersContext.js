@@ -95,6 +95,7 @@ const FiltersProvider = ({ children }) => {
         type: 'FILTERED_PRODUCTS',
         payload: { updatedProducts }
     });
+    applyFilters();
 }, [
     state.sortedValue,
     state.updatedBrandsMenu,
