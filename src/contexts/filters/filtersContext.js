@@ -1,4 +1,4 @@
-import { createContext, useEffect, useReducer } from 'react';
+import { createContext, useEffect, useReducer, useCallback } from 'react';
 import productsData from '../../data/productsData';
 import { brandsMenu, categoryMenu } from '../../data/filterBarData';
 import filtersReducer from './filtersReducer';
@@ -44,70 +44,63 @@ const FiltersProvider = ({ children }) => {
     }, []);
 
 
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
+    let updatedProducts = [...productsData];
 
-        let updatedProducts = [...productsData];
-
-        if (state.sortedValue) {
-            switch (state.sortedValue) {
-                case 'Latest':
-                    updatedProducts = updatedProducts.slice(0, 6).map(item => item);
-                    break;
-
-                case 'Featured':
-                    updatedProducts = updatedProducts.filter(item => item.tag === 'featured-product');
-                    break;
-
-                case 'Top Rated':
-                    updatedProducts = updatedProducts.filter(item => item.rateCount > 4);
-                    break;
-
-                case 'Price(Lowest First)':
-                    updatedProducts = updatedProducts.sort((a, b) => a.finalPrice - b.finalPrice);
-                    break;
-
-                case 'Price(Highest First)':
-                    updatedProducts = updatedProducts.sort((a, b) => b.finalPrice - a.finalPrice);
-                    break;
-
-                default:
-                    throw new Error('Wrong Option Selected');
-            }
+    if (state.sortedValue) {
+        switch (state.sortedValue) {
+            case 'Latest':
+                updatedProducts = updatedProducts.slice(0, 6).map(item => item);
+                break;
+            case 'Featured':
+                updatedProducts = updatedProducts.filter(item => item.tag === 'featured-product');
+                break;
+            case 'Top Rated':
+                updatedProducts = updatedProducts.filter(item => item.rateCount > 4);
+                break;
+            case 'Price(Lowest First)':
+                updatedProducts = updatedProducts.sort((a, b) => a.finalPrice - b.finalPrice);
+                break;
+            case 'Price(Highest First)':
+                updatedProducts = updatedProducts.sort((a, b) => b.finalPrice - a.finalPrice);
+                break;
+            default:
+                throw new Error('Wrong Option Selected');
         }
+    }
 
-        const checkedBrandItems = state.updatedBrandsMenu.filter(item => {
-            return item.checked;
-        }).map(item => item.label.toLowerCase());
+    const checkedBrandItems = state.updatedBrandsMenu.filter(item => item.checked).map(item => item.label.toLowerCase());
 
-        if (checkedBrandItems.length) {
-            updatedProducts = updatedProducts.filter(item => checkedBrandItems.includes(item.brand.toLowerCase()));
-        }
+    if (checkedBrandItems.length) {
+        updatedProducts = updatedProducts.filter(item =>
+            checkedBrandItems.includes(item.brand.toLowerCase())
+        );
+    }
 
-        const checkedCategoryItems = state.updatedCategoryMenu.filter(item => {
-            return item.checked;
-        }).map(item => item.label.toLowerCase());
+    const checkedCategoryItems = state.updatedCategoryMenu.filter(item => item.checked).map(item => item.label.toLowerCase());
 
-        if (checkedCategoryItems.length) {
-            updatedProducts = updatedProducts.filter(item => checkedCategoryItems.includes(item.category.toLowerCase()));
-        }
+    if (checkedCategoryItems.length) {
+        updatedProducts = updatedProducts.filter(item =>
+            checkedCategoryItems.includes(item.category.toLowerCase())
+        );
+    }
 
-        if (state.selectedPrice) {
-            updatedProducts = updatedProducts.filter(item => {
-                return item.finalPrice <= state.selectedPrice.price;
-            });
-        }
+    if (state.selectedPrice) {
+        updatedProducts = updatedProducts.filter(item =>
+            item.finalPrice <= state.selectedPrice.price
+        );
+    }
 
-        dispatch({
-            type: 'FILTERED_PRODUCTS',
-            payload: { updatedProducts }
-        });
-    };
-
-    useEffect(() => {
-        applyFilters();
-    }, [state.sortedValue, state.updatedBrandsMenu, state.updatedCategoryMenu, state.selectedPrice]);
-
-
+    dispatch({
+        type: 'FILTERED_PRODUCTS',
+        payload: { updatedProducts }
+    });
+}, [
+    state.sortedValue,
+    state.updatedBrandsMenu,
+    state.updatedCategoryMenu,
+    state.selectedPrice
+]);
 
     const setSortedValue = (sortValue) => {
         return dispatch({
